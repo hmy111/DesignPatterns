@@ -1,12 +1,25 @@
-﻿using System;
+﻿
+Client client = new Client();
+client.GetYear();
 
+
+[Decorator(typeof(ITimeProvider))]
+public class Client
+{
+    public int GetYear()
+    {
+        ITimeProvider provider = AttributeHelper.Injector<ITimeProvider>(this) ?? throw new NullReferenceException();
+
+        return provider.CurrentDate.Year;
+    }
+}
 sealed class DecoratorAttribute : Attribute
 {
     public readonly object Injector;
     private readonly Type _type;
     public DecoratorAttribute(Type type)
     {
-        _type = type ?? throw new ArgumentNullException(nameof(type));
+        _type = type;
         Injector = new Assembler().Create(_type);
     }
     public Type @Type => this._type;
@@ -18,11 +31,22 @@ static class AttributeHelper
     /// target:" 客户端
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public static T Injector<T>(object target) where T : class
+    public static T? Injector<T>(object target) where T : class
     {
         if (target == null) throw new ArgumentNullException();
 
-        target.GetType().GetCustomAttributes(typeof(ITimeProvider), false);
+        var attributes = target.GetType().GetCustomAttributes(typeof(DecoratorAttribute), false);
+
+        if (attributes.Length <= 0) return null;
+
+        foreach (var attr in (DecoratorAttribute[])attributes)
+        {
+            if (attr.Type == typeof(T))
+            {
+                return (T?)attr.Injector;
+            }
+        }
+        return null;
     }
 }
 

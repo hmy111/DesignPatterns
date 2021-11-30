@@ -3,7 +3,7 @@ text = new ColorDecorator(text);
 text = new BlodDecorator(text);
 System.Console.WriteLine(text.Content);
 
-Console.ReadKey();
+Console.Read();
 
 // IComment
 public interface IText
